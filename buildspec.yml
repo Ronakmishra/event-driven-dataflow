@@ -27,31 +27,37 @@ phases:
     commands:
       - echo "Updating Lambda function code..."
 
-      - aws lambda update-function-code \
+      - >
+        aws lambda update-function-code \
         --function-name $PRODUCE_FUNCTION_NAME \
         --s3-bucket $DEPLOY_BUCKET \
         --s3-key $PRODUCE_FUNCTION_NAME.zip \
         --region $AWS_REGION
 
-      - aws lambda update-function-code \
+      - >
+        aws lambda update-function-code \
         --function-name $PROCESS_FUNCTION_NAME \
         --s3-bucket $DEPLOY_BUCKET \
         --s3-key $PROCESS_FUNCTION_NAME.zip \
         --region $AWS_REGION
 
-      - aws lambda update-function-code \
+      - >
+        aws lambda update-function-code \
         --function-name $ENRICH_FUNCTION_NAME \
         --s3-bucket $DEPLOY_BUCKET \
         --s3-key $ENRICH_FUNCTION_NAME.zip \
         --region $AWS_REGION
 
       - echo "Updating environment variables on Lambda..."
-      - aws lambda update-function-configuration \
+
+      - >
+        aws lambda update-function-configuration \
         --function-name $PRODUCE_FUNCTION_NAME \
         --environment "Variables={QUEUE_URL=$QUEUE_URL}" \
         --region $AWS_REGION
 
-      - aws lambda update-function-configuration \
+      - >
+        aws lambda update-function-configuration \
         --function-name $PROCESS_FUNCTION_NAME \
         --environment "Variables={TARGET_BUCKET=$TARGET_BUCKET}" \
         --region $AWS_REGION
@@ -60,7 +66,9 @@ phases:
       - sleep 8
 
       - echo "Invoking Producer Lambda..."
-      - aws lambda invoke \
+
+      - >
+        aws lambda invoke \
         --function-name $PRODUCE_FUNCTION_NAME \
         --invocation-type Event \
         --region $AWS_REGION \
