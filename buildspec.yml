@@ -8,6 +8,7 @@ phases:
   install:
     runtime-versions:
       python: 3.11
+  pre_build:
     commands:
       - echo "Install phase: no dependencies to install"
 
