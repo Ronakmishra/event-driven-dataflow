@@ -1,0 +1,42 @@
+version: 0.2
+
+env:
+  variables:
+    S3_BUCKET: event-driven-dataflow-ass-cl4
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+    commands:
+      - pip install python-dotenv
+      - echo "Installing dotenv to read .env file"
+
+  pre_build:
+    commands:
+      - echo "Loading environment variables from .env"
+      - export $(cat .env | xargs)
+
+  build:
+    commands:
+      - echo "Zipping Lambda function: produce"
+      - cd app/produce && zip -r ../../produce.zip . && cd ../..
+      - echo "Zipping Lambda function: process"
+      - cd app/process && zip -r ../../process.zip . && cd ../..
+
+  post_build:
+    commands:
+      - echo "Uploading to S3"
+      - aws s3 cp produce.zip s3://$S3_BUCKET/produce/produce.zip
+      - aws s3 cp process.zip s3://$S3_BUCKET/process/process.zip
+
+      - echo "Updating Lambda function code for PRODUCE: $PRODUCE_FUNCTION_NAME"
+      - aws lambda update-function-code --function-name $PRODUCE_FUNCTION_NAME --s3-bucket $S3_BUCKET --s3-key produce/produce.zip
+
+      - echo "Updating Lambda function code for PROCESS: $PROCESS_FUNCTION_NAME"
+      - aws lambda update-function-code --function-name $PROCESS_FUNCTION_NAME --s3-bucket $S3_BUCKET --s3-key process/process.zip
+
+artifacts:
+  files:
+    - produce.zip
+    - process.zip
