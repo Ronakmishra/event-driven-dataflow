@@ -3,77 +3,67 @@ version: 0.2
 env:
   variables:
     AWS_REGION: us-east-1
-  exported-variables:
-    - PRODUCE_FUNCTION_NAME
-    - PROCESS_FUNCTION_NAME
-    - ENRICH_FUNCTION_NAME
-    - QUEUE_URL
-    - TARGET_BUCKET
-    - DEPLOY_BUCKET
 
 phases:
   install:
     runtime-versions:
       python: 3.11
     commands:
-      - echo "Loading environment variables..."
-      - source .env
-      - echo "Environment loaded."
+      - echo "Install phase: no dependencies to install"
 
   build:
     commands:
       - echo "Zipping Lambda functions..."
-      - zip -j "$PRODUCE_FUNCTION_NAME.zip" app/produce_data.py
-      - zip -j "$PROCESS_FUNCTION_NAME.zip" app/process_filtered_data.py
-      - zip -j "$ENRICH_FUNCTION_NAME.zip" app/enrich_data.py
+      - zip -j $PRODUCE_FUNCTION_NAME.zip app/produce_data.py
+      - zip -j $PROCESS_FUNCTION_NAME.zip app/process_filtered_data.py
+      - zip -j $ENRICH_FUNCTION_NAME.zip app/enrich_data.py
 
       - echo "Uploading zips to S3..."
-      - aws s3 cp "$PRODUCE_FUNCTION_NAME.zip" s3://$DEPLOY_BUCKET/
-      - aws s3 cp "$PROCESS_FUNCTION_NAME.zip" s3://$DEPLOY_BUCKET/
-      - aws s3 cp "$ENRICH_FUNCTION_NAME.zip" s3://$DEPLOY_BUCKET/
+      - aws s3 cp $PRODUCE_FUNCTION_NAME.zip s3://$DEPLOY_BUCKET/
+      - aws s3 cp $PROCESS_FUNCTION_NAME.zip s3://$DEPLOY_BUCKET/
+      - aws s3 cp $ENRICH_FUNCTION_NAME.zip s3://$DEPLOY_BUCKET/
 
   post_build:
     commands:
       - echo "Updating Lambda function code..."
 
       - aws lambda update-function-code \
-        --function-name "$PRODUCE_FUNCTION_NAME" \
-        --s3-bucket "$DEPLOY_BUCKET" \
-        --s3-key "$PRODUCE_FUNCTION_NAME.zip" \
-        --region "$AWS_REGION"
+        --function-name $PRODUCE_FUNCTION_NAME \
+        --s3-bucket $DEPLOY_BUCKET \
+        --s3-key $PRODUCE_FUNCTION_NAME.zip \
+        --region $AWS_REGION
 
       - aws lambda update-function-code \
-        --function-name "$PROCESS_FUNCTION_NAME" \
-        --s3-bucket "$DEPLOY_BUCKET" \
-        --s3-key "$PROCESS_FUNCTION_NAME.zip" \
-        --region "$AWS_REGION"
+        --function-name $PROCESS_FUNCTION_NAME \
+        --s3-bucket $DEPLOY_BUCKET \
+        --s3-key $PROCESS_FUNCTION_NAME.zip \
+        --region $AWS_REGION
 
       - aws lambda update-function-code \
-        --function-name "$ENRICH_FUNCTION_NAME" \
-        --s3-bucket "$DEPLOY_BUCKET" \
-        --s3-key "$ENRICH_FUNCTION_NAME.zip" \
-        --region "$AWS_REGION"
+        --function-name $ENRICH_FUNCTION_NAME \
+        --s3-bucket $DEPLOY_BUCKET \
+        --s3-key $ENRICH_FUNCTION_NAME.zip \
+        --region $AWS_REGION
 
-      - echo "Setting environment variables..."
-
+      - echo "Updating environment variables on Lambda..."
       - aws lambda update-function-configuration \
-        --function-name "$PRODUCE_FUNCTION_NAME" \
+        --function-name $PRODUCE_FUNCTION_NAME \
         --environment "Variables={QUEUE_URL=$QUEUE_URL}" \
-        --region "$AWS_REGION"
+        --region $AWS_REGION
 
       - aws lambda update-function-configuration \
-        --function-name "$PROCESS_FUNCTION_NAME" \
+        --function-name $PROCESS_FUNCTION_NAME \
         --environment "Variables={TARGET_BUCKET=$TARGET_BUCKET}" \
-        --region "$AWS_REGION"
+        --region $AWS_REGION
 
-      - echo "Waiting 8 seconds to ensure code is updated before invocation..."
+      - echo "Waiting 8 seconds before invoking Producer..."
       - sleep 8
 
       - echo "Invoking Producer Lambda..."
       - aws lambda invoke \
-        --function-name "$PRODUCE_FUNCTION_NAME" \
+        --function-name $PRODUCE_FUNCTION_NAME \
         --invocation-type Event \
-        --region "$AWS_REGION" \
+        --region $AWS_REGION \
         --payload '{}' response.json
 
 artifacts:
