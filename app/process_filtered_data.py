@@ -10,11 +10,29 @@ BUCKET = os.getenv("TARGET_BUCKET")
 def lambda_handler(event, context):
     print("Received event:", json.dumps(event))
     
-    # Handle different event formats
-    if isinstance(event, dict):
-        # If event is a dict, check for different possible structures
-        if "body" in event:
-            # Parse body if it's a string
+    records = []
+    
+    # Handle different event formats from EventBridge Pipe
+    if isinstance(event, list):
+        # EventBridge might send a list of enrichment responses
+        for item in event:
+            if isinstance(item, dict):
+                # Check if it's the Lambda response format
+                if "statusCode" in item and "body" in item:
+                    # Parse the Lambda response body
+                    body = json.loads(item["body"]) if isinstance(item["body"], str) else item["body"]
+                    records.extend(body.get("records", []))
+                elif "records" in item:
+                    # Direct records format
+                    records.extend(item["records"])
+                else:
+                    # Assume it's a booking record
+                    records.append(item)
+    
+    elif isinstance(event, dict):
+        # Single response object
+        if "statusCode" in event and "body" in event:
+            # Lambda response format
             body = json.loads(event["body"]) if isinstance(event["body"], str) else event["body"]
             records = body.get("records", [])
         elif "records" in event:
@@ -23,10 +41,6 @@ def lambda_handler(event, context):
         else:
             print("No records found in dict event")
             return {"statusCode": 204, "body": "No records to process"}
-    
-    elif isinstance(event, list):
-        # If event is a list, it might be the records directly
-        records = event
     
     else:
         print(f"Unexpected event type: {type(event)}")
