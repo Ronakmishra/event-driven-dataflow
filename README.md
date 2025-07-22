@@ -2,9 +2,7 @@
 
 This project showcases a complete **event-driven streaming pipeline** built with AWS services using CI/CD and SQS + Lambda + EventBridge Pipes. It simulates the ingestion, enrichment, and processing of Airbnb-style booking events.
 
-<br>
-
-![Architecture Diagram](./Screen Recording 2025-07-22 at 2.27.04 AM.gif)
+![Architecture Diagram](./architecture-diagram.gif)
 
 ---
 
@@ -105,4 +103,3 @@ With structure like:
 - Add Athena/Glue catalog for querying output
 - Schedule periodic DLQ reprocessing
 - Integrate notification alerts for DLQ via SNS
-
