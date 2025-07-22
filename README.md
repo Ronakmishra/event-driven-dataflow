@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🏗️ Event-Driven Data Ingestion Pipeline on AWS
 
 This project showcases a complete **event-driven streaming pipeline** built with AWS services using CI/CD and SQS + Lambda + EventBridge Pipes. It simulates the ingestion, enrichment, and processing of Airbnb-style booking events.
@@ -105,3 +106,6 @@ With structure like:
 - Add Athena/Glue catalog for querying output
 - Schedule periodic DLQ reprocessing
 - Integrate notification alerts for DLQ via SNS
+=======
+# event-driven-dataflow!!!
+>>>>>>> 99fb0040a2651450f0146d1aab29b22cfb13e16d
